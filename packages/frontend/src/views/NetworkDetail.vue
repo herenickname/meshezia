@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import { useApi } from '../composables/useApi'
 
 const props = defineProps<{ id: string }>()
@@ -41,6 +41,9 @@ const networkToken = ref('')
 const updatePeerId = ref('')
 const updateUrl = ref('')
 const updateDialog = ref<HTMLDialogElement>()
+const editingName = ref(false)
+const editName = ref('')
+const editNameInput = ref<HTMLInputElement>()
 
 function isOnline(lastSeen: number): boolean {
     return lastSeen > 0 && (now.value - lastSeen) < 60_000
@@ -151,6 +154,26 @@ async function forceModeSwitch(link: PeerLink, mode: 'force-direct' | 'force-rel
     } catch (e: any) {
         error.value = e.message
     }
+}
+
+function startEditName() {
+    if (!network.value) return
+    editName.value = network.value.name
+    editingName.value = true
+    nextTick(() => editNameInput.value?.select())
+}
+
+async function saveName() {
+    if (!network.value) return
+    const name = editName.value.trim()
+    if (!name || name === network.value.name) { editingName.value = false; return }
+    try {
+        const updated = await patch<Network>(`/api/networks/${network.value.id}`, { name })
+        network.value = updated
+    } catch (e: any) {
+        error.value = e.message
+    }
+    editingName.value = false
 }
 
 async function toggleRelay() {
@@ -282,8 +305,28 @@ onUnmounted(() => {
         <!-- Network header -->
         <div class="card">
             <div class="flex justify-between items-start">
-                <div>
-                    <h2 class="text-xl font-bold">{{ network.name }}</h2>
+                <div class="min-w-0">
+                    <form v-if="editingName" class="flex items-center gap-2" @submit.prevent="saveName">
+                        <input
+                            ref="editNameInput"
+                            v-model="editName"
+                            class="input text-xl font-bold py-0.5 px-2 -ml-2 w-full max-w-[320px]"
+                            name="network-name"
+                            spellcheck="false"
+                            aria-label="Network name"
+                            maxlength="100"
+                            @blur="saveName"
+                            @keydown.escape="editingName = false"
+                        />
+                    </form>
+                    <h2 v-else class="text-xl font-bold">
+                        <button
+                            type="button"
+                            class="btn-reset hover:text-blue-500"
+                            title="Click to rename"
+                            @click="startEditName"
+                        >{{ network.name }}</button>
+                    </h2>
                     <div class="font-mono text-xs text-gray-500 mt-1">
                         {{ network.subnet }}
                     </div>
@@ -306,6 +349,7 @@ onUnmounted(() => {
                 <button
                     class="btn btn-sm"
                     :class="network.relayEnabled ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 hover:bg-gray-500'"
+                    :aria-pressed="network.relayEnabled"
                     @click="toggleRelay"
                     :title="network.relayEnabled ? 'Relay is enabled — nodes can fail over to relay when direct path is dead' : 'Relay is disabled — nodes always stay on direct, even without handshakes'"
                 >
@@ -382,15 +426,15 @@ onUnmounted(() => {
         <!-- Peer table -->
         <table v-if="peers.length > 0" class="table-fixed">
             <colgroup>
-                <col style="width: 180px" /><!-- Name -->
-                <col style="width: 80px" /><!-- Status -->
-                <col style="width: 110px" /><!-- Mesh IP -->
-                <col style="width: 130px" /><!-- Public IP -->
-                <col style="width: 140px" /><!-- Pubkey -->
-                <col style="width: 100px" /><!-- Last Seen -->
-                <col style="width: 80px" /><!-- TTL -->
-                <col style="width: 120px" /><!-- Memo -->
-                <col style="width: 150px" /><!-- Actions -->
+                <col style="width: 20%" /><!-- Name -->
+                <col style="width: 8%" /><!-- Status -->
+                <col style="width: 10%" /><!-- Mesh IP -->
+                <col style="width: 12%" /><!-- Public IP -->
+                <col style="width: 12%" /><!-- Pubkey -->
+                <col style="width: 9%" /><!-- Last Seen -->
+                <col style="width: 8%" /><!-- TTL -->
+                <col style="width: 8%" /><!-- Memo -->
+                <col style="width: 13%" /><!-- Actions -->
             </colgroup>
             <thead>
                 <tr>
@@ -423,7 +467,7 @@ onUnmounted(() => {
                                 {{ p.name }}
                                 <span class="text-gray-500 text-xs ml-1.5" aria-hidden="true">{{ expandedPeer === p.id ? '\u25BE' : '\u25B8' }}</span>
                             </button>
-                            <span v-if="p.agentVersion" class="text-[10px] text-gray-400 ml-1">v{{ p.agentVersion }}</span>
+                            <span v-if="p.agentVersion" class="text-[11px] text-gray-500 ml-1">v{{ p.agentVersion }}</span>
                             <span
                                 v-if="p.isRelayEligible"
                                 class="inline-flex items-center justify-center size-4 rounded bg-blue-100 text-blue-500 text-[9px] font-bold ml-1.5 align-middle"
@@ -444,6 +488,7 @@ onUnmounted(() => {
                                 class="btn-reset hover:text-blue-500 font-mono text-xs"
                                 @click="expandedPubkey === p.id ? expandedPubkey = '' : expandedPubkey = p.id"
                                 :title="p.pubkey || 'no key'"
+                                :aria-label="`${expandedPubkey === p.id ? 'Collapse' : 'Expand'} public key for ${p.name}`"
                             >
                                 {{ p.pubkey ? (expandedPubkey === p.id ? p.pubkey : p.pubkey.slice(0, 12) + '\u2026') : '\u2014' }}
                             </button>
@@ -458,7 +503,7 @@ onUnmounted(() => {
                         <td style="font-variant-numeric: tabular-nums">
                             <span :class="isOnline(p.lastSeen) ? '' : 'text-gray-500'">{{ peerAge(p.lastSeen) }}</span>
                         </td>
-                        <td>
+                        <td style="font-variant-numeric: tabular-nums">
                             <span :class="[
                                 'text-xs text-gray-500',
                                 p.ttlSeconds && p.lastSeen && (p.ttlSeconds - Math.floor((now - p.lastSeen) / 1000)) < 120 ? 'text-amber-600 font-medium' : ''
@@ -469,9 +514,11 @@ onUnmounted(() => {
                         <td>
                             <span class="text-xs text-gray-500 max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap inline-block align-middle" :title="p.memo">{{ p.memo || '—' }}</span>
                         </td>
-                        <td class="flex gap-1.5 min-w-[140px]" @click.stop>
-                            <button v-if="isOnline(p.lastSeen)" class="btn btn-secondary btn-sm" :aria-label="`Update ${p.name}`" @click="openUpdateDialog(p.id)">Update</button>
-                            <button class="btn btn-danger btn-sm" :aria-label="`Remove ${p.name}`" @click="removePeer(p.id)">Remove</button>
+                        <td @click.stop>
+                            <div class="flex gap-1.5">
+                                <button v-if="isOnline(p.lastSeen)" class="btn btn-secondary btn-sm" :aria-label="`Update ${p.name}`" @click="openUpdateDialog(p.id)">Update</button>
+                                <button class="btn btn-danger btn-sm" :aria-label="`Remove ${p.name}`" @click="removePeer(p.id)">Remove</button>
+                            </div>
                         </td>
                     </tr>
                     <!-- Expanded peer connections -->
@@ -509,7 +556,7 @@ onUnmounted(() => {
                                     </thead>
                                     <tbody>
                                         <tr v-for="l in linksForPeer(p.id)" :key="l.toPeerId" :class="isLinkStale(l.updatedAt) ? 'opacity-50' : ''">
-                                            <td class="font-medium">{{ l.toName }}</td>
+                                            <td class="font-medium truncate">{{ l.toName }}</td>
                                             <td class="font-mono">{{ l.ifName || '—' }}</td>
                                             <td class="font-mono">{{ l.routingTable || '—' }}</td>
                                             <td>
@@ -528,12 +575,14 @@ onUnmounted(() => {
                                                         v-if="l.mode === 'relay' || l.probingDirect"
                                                         class="btn btn-sm bg-green-600 hover:bg-green-700 text-[10px] py-1 px-2 min-h-7"
                                                         @click="forceModeSwitch(l, 'force-direct')"
+                                                        :aria-label="`Force direct: ${l.toName}`"
                                                         title="Force switch to direct"
                                                     >Force Direct</button>
                                                     <button
                                                         v-if="l.mode === 'direct' && !l.probingDirect"
                                                         class="btn btn-sm bg-amber-600 hover:bg-amber-700 text-[10px] py-1 px-2 min-h-7"
                                                         @click="forceModeSwitch(l, 'force-relay')"
+                                                        :aria-label="`Force relay: ${l.toName}`"
                                                         title="Force switch to relay"
                                                     >Force Relay</button>
                                                 </div>
@@ -556,9 +605,9 @@ onUnmounted(() => {
         </div>
 
         <!-- Update agent dialog -->
-        <dialog ref="updateDialog" class="rounded-xl border border-gray-200 p-0 shadow-lg" @close="updatePeerId = ''">
+        <dialog ref="updateDialog" class="rounded-xl border border-gray-200 p-0 shadow-lg" aria-labelledby="update-dialog-title" @close="updatePeerId = ''">
             <div class="p-5 w-[400px]">
-                <h3 class="text-sm font-semibold mb-3">Update Agent</h3>
+                <h3 id="update-dialog-title" class="text-sm font-semibold mb-3">Update Agent</h3>
                 <form @submit.prevent="submitUpdate">
                     <label class="flex flex-col gap-1 mb-3">
                         <span class="form-label">Download URL</span>

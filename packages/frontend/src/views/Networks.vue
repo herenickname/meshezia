@@ -166,11 +166,11 @@ onUnmounted(() => {
                 <div class="flex gap-3 mb-3 items-end flex-wrap">
                     <label class="flex flex-col gap-1 flex-[2]">
                         <span class="form-label">Name</span>
-                        <input v-model="form.name" required name="network-name" placeholder="production\u2026" class="input w-full" />
+                        <input v-model="form.name" required name="network-name" placeholder="production\u2026" spellcheck="false" class="input w-full" />
                     </label>
                     <label class="flex flex-col gap-1 flex-[2]">
                         <span class="form-label">Subnet (CIDR)</span>
-                        <input v-model="form.subnet" required name="subnet" placeholder="10.100.0.0/23…" class="input w-full" />
+                        <input v-model="form.subnet" required name="subnet" placeholder="10.100.0.0/23…" spellcheck="false" class="input w-full" />
                     </label>
                 </div>
                 <div class="mb-2">

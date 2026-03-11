@@ -15,7 +15,7 @@
     table { @apply w-full border-collapse; }
     th, td { @apply text-left py-2.5 px-3 border-b border-gray-200; }
     th { @apply text-gray-500 text-[11px] uppercase tracking-wider font-semibold; }
-    tbody tr { @apply transition-colors; }
+    tbody tr { transition-property: background-color; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
     tbody tr:hover { @apply bg-gray-50; }
 }
 

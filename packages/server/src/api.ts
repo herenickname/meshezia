@@ -263,6 +263,12 @@ export function createApi(adminToken: string) {
         const db = getDb()
         const id = c.req.param('id')
 
+        if (body.name !== undefined) {
+            const name = String(body.name).trim()
+            if (!name || name.length > 100) return c.json({ error: 'Name must be 1-100 chars' }, 400)
+            db.run('UPDATE networks SET name = ? WHERE id = ?', [name, id])
+        }
+
         if (body.relayEnabled !== undefined) {
             db.run('UPDATE networks SET relay_enabled = ? WHERE id = ?', [body.relayEnabled ? 1 : 0, id])
         }

@@ -72,7 +72,7 @@ onMounted(() => {
                     <span class="text-blue-500 text-lg" aria-hidden="true">&#9670;</span>
                     <h1 class="text-lg font-semibold -tracking-wide">Meshezia</h1>
                 </router-link>
-                <span class="text-xs text-gray-400 font-mono">v{{ version }}</span>
+                <span class="text-xs text-gray-500 font-mono">v{{ version }}</span>
             </div>
             <button class="btn btn-secondary btn-sm" @click="logout">Logout</button>
         </header>
