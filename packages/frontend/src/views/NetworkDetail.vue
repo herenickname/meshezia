@@ -380,7 +380,18 @@ onUnmounted(() => {
         </div>
 
         <!-- Peer table -->
-        <table v-if="peers.length > 0">
+        <table v-if="peers.length > 0" class="table-fixed">
+            <colgroup>
+                <col style="width: 180px" /><!-- Name -->
+                <col style="width: 80px" /><!-- Status -->
+                <col style="width: 110px" /><!-- Mesh IP -->
+                <col style="width: 130px" /><!-- Public IP -->
+                <col style="width: 140px" /><!-- Pubkey -->
+                <col style="width: 100px" /><!-- Last Seen -->
+                <col style="width: 80px" /><!-- TTL -->
+                <col style="width: 120px" /><!-- Memo -->
+                <col style="width: 150px" /><!-- Actions -->
+            </colgroup>
             <thead>
                 <tr>
                     <th :aria-sort="ariaSort('name')"><button type="button" class="btn-reset w-full text-left cursor-pointer" @click="toggleSort('name')">Name {{ sortIcon('name') }}</button></th>
@@ -444,7 +455,7 @@ onUnmounted(() => {
                                 {{ copiedField === `pk-${p.id}` ? '\u2713' : 'copy' }}
                             </button>
                         </td>
-                        <td>
+                        <td style="font-variant-numeric: tabular-nums">
                             <span :class="isOnline(p.lastSeen) ? '' : 'text-gray-500'">{{ peerAge(p.lastSeen) }}</span>
                         </td>
                         <td>
@@ -471,7 +482,18 @@ onUnmounted(() => {
                                     No connection data from this peer yet.
                                 </div>
                                 <div v-else class="overflow-x-auto">
-                                <table class="w-full text-xs table-compact">
+                                <table class="w-full text-xs table-compact table-fixed">
+                                    <colgroup>
+                                        <col style="width: 160px" /><!-- To -->
+                                        <col style="width: 70px" /><!-- Interface -->
+                                        <col style="width: 60px" /><!-- Table -->
+                                        <col style="width: 80px" /><!-- Mode -->
+                                        <col style="width: 180px" /><!-- Endpoint -->
+                                        <col style="width: 90px" /><!-- Handshake -->
+                                        <col style="width: 150px" /><!-- RX / TX -->
+                                        <col style="width: 80px" /><!-- Updated -->
+                                        <col style="width: 120px" /><!-- Actions -->
+                                    </colgroup>
                                     <thead>
                                         <tr>
                                             <th class="text-[11px]">To</th>
@@ -496,10 +518,10 @@ onUnmounted(() => {
                                                 <span v-else-if="l.mode === 'relay'" class="badge badge-stale">relay</span>
                                                 <span v-else class="badge bg-gray-100 text-gray-500">unknown</span>
                                             </td>
-                                            <td class="font-mono">{{ l.endpoint || '—' }}</td>
-                                            <td>{{ handshakeAge(l.lastHandshake) }}</td>
+                                            <td class="font-mono truncate">{{ l.endpoint || '—' }}</td>
+                                            <td style="font-variant-numeric: tabular-nums">{{ handshakeAge(l.lastHandshake) }}</td>
                                             <td class="font-mono whitespace-nowrap" style="font-variant-numeric: tabular-nums">{{ formatBytes(l.rxBytes) }} / {{ formatBytes(l.txBytes) }}</td>
-                                            <td class="text-gray-500">{{ peerAge(l.updatedAt) }}</td>
+                                            <td class="text-gray-500" style="font-variant-numeric: tabular-nums">{{ peerAge(l.updatedAt) }}</td>
                                             <td @click.stop>
                                                 <div class="flex gap-1">
                                                     <button
@@ -527,77 +549,6 @@ onUnmounted(() => {
             </tbody>
         </table>
 
-        <!-- Connections -->
-        <div class="flex justify-between items-center mt-5 mb-3">
-            <h3 class="text-base font-semibold">
-                Connections
-                <span class="text-gray-500 font-normal text-sm">({{ links.length }})</span>
-            </h3>
-            <div class="flex items-center gap-3 text-[11px]">
-                <span class="text-green-700">direct: {{ directLinkCount }}</span>
-                <span class="text-amber-700">relay: {{ relayLinkCount }}</span>
-            </div>
-        </div>
-
-        <div v-if="links.length === 0" class="card p-8 text-center">
-            <p class="text-gray-500">No connection data yet. Agents report status every poll interval.</p>
-        </div>
-
-        <div v-if="links.length > 0" class="overflow-x-auto">
-            <table>
-                <thead>
-                    <tr>
-                        <th>From</th>
-                        <th>To</th>
-                        <th>Mode</th>
-                        <th>Endpoint</th>
-                        <th>Handshake</th>
-                        <th>RX / TX</th>
-                        <th>Updated</th>
-                        <th aria-label="Actions"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="l in links" :key="`${l.fromPeerId}-${l.toPeerId}`" :class="isLinkStale(l.updatedAt) ? 'opacity-50' : ''">
-                        <td class="font-medium text-sm">{{ l.fromName }}</td>
-                        <td class="font-medium text-sm">{{ l.toName }}</td>
-                        <td>
-                            <span v-if="l.probingDirect"
-                                class="badge bg-blue-100 text-blue-700"
-                                title="Probing direct path"
-                            >probing</span>
-                            <span v-else-if="l.mode === 'direct'"
-                                class="badge badge-online"
-                            >direct</span>
-                            <span v-else-if="l.mode === 'relay'"
-                                class="badge badge-stale"
-                            >relay</span>
-                            <span v-else class="badge bg-gray-100 text-gray-500">unknown</span>
-                        </td>
-                        <td class="font-mono text-xs">{{ l.endpoint || '—' }}</td>
-                        <td class="text-xs">{{ handshakeAge(l.lastHandshake) }}</td>
-                        <td class="font-mono text-xs whitespace-nowrap" style="font-variant-numeric: tabular-nums">{{ formatBytes(l.rxBytes) }} / {{ formatBytes(l.txBytes) }}</td>
-                        <td class="text-xs text-gray-500">{{ peerAge(l.updatedAt) }}</td>
-                        <td>
-                            <div class="flex gap-1">
-                                <button
-                                    v-if="l.mode === 'relay' || l.probingDirect"
-                                    class="btn btn-sm bg-green-600 hover:bg-green-700 text-[10px] py-1 px-2 min-h-7"
-                                    @click="forceModeSwitch(l, 'force-direct')"
-                                    title="Force switch to direct"
-                                >Force Direct</button>
-                                <button
-                                    v-if="l.mode === 'direct' && !l.probingDirect"
-                                    class="btn btn-sm bg-amber-600 hover:bg-amber-700 text-[10px] py-1 px-2 min-h-7"
-                                    @click="forceModeSwitch(l, 'force-relay')"
-                                    title="Force switch to relay"
-                                >Force Relay</button>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
 
         <!-- Network ID -->
         <div class="mt-6 text-center">
