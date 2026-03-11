@@ -1,0 +1,34 @@
+FROM golang:1.24-bookworm AS awg-build
+
+# Build amneziawg-go (userspace)
+RUN git clone --depth 1 https://github.com/amnezia-vpn/amneziawg-go /build/awg-go
+WORKDIR /build/awg-go
+RUN make
+
+# Build amneziawg-tools (awg CLI)
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential
+RUN git clone --depth 1 https://github.com/amnezia-vpn/amneziawg-tools /build/awg-tools
+WORKDIR /build/awg-tools/src
+RUN make
+
+FROM oven/bun:1-debian
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    iproute2 iptables curl procps iputils-ping \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=awg-build /build/awg-go/amneziawg-go /usr/local/bin/
+COPY --from=awg-build /build/awg-tools/src/wg /usr/local/bin/awg
+
+WORKDIR /app
+COPY package.json bun.lock tsconfig.json ./
+COPY packages/shared/package.json packages/shared/package.json
+COPY packages/server/package.json packages/server/package.json
+COPY packages/agent/package.json packages/agent/package.json
+COPY packages/frontend/package.json packages/frontend/package.json
+RUN bun install --frozen-lockfile
+COPY packages/shared/ packages/shared/
+COPY packages/agent/ packages/agent/
+
+RUN mkdir -p /var/lib/meshezia /var/run/amneziawg
+
+ENTRYPOINT ["bun", "run", "packages/agent/src/index.ts", "--userspace"]

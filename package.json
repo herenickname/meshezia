@@ -1,0 +1,25 @@
+{
+    "name": "meshezia",
+    "version": "0.3.0",
+    "private": true,
+    "workspaces": ["packages/*"],
+    "scripts": {
+        "dev:server": "bun run packages/server/src/index.ts",
+        "dev:agent": "bun run packages/agent/src/index.ts",
+        "build:agent": "bun build --compile packages/agent/src/index.ts --outfile dist/meshezia-agent",
+        "build:server": "bun build --compile packages/server/src/index.ts --outfile dist/meshezia-server",
+        "dev:frontend": "cd packages/frontend && bun run dev",
+        "build:frontend": "cd packages/frontend && bun run build",
+        "test:docker": "cd tests && ./setup.sh",
+        "test:docker:down": "cd tests && docker compose down -v",
+        "test": "cd tests && ./run-all.sh",
+        "test:build": "cd tests && ./run-all.sh --build",
+        "test:negotiate": "cd tests && ./run-all.sh --suite negotiate",
+        "test:force-mode": "cd tests && ./run-all.sh --suite force-mode",
+        "test:health": "cd tests && ./run-all.sh --suite health-report",
+        "test:3node": "cd tests && ./run-all.sh --suite three-node"
+    },
+    "devDependencies": {
+        "@types/bun": "^1.3.10"
+    }
+}

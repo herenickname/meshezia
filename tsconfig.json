@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "outDir": "dist",
+        "declaration": true,
+        "paths": {
+            "@meshezia/shared": ["./packages/shared/src/index.ts"]
+        }
+    },
+    "include": ["packages/*/src/**/*.ts"]
+}

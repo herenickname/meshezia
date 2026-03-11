@@ -1,0 +1,113 @@
+services:
+  server:
+    image: meshezia-test-server
+    build:
+      context: ..
+      dockerfile: tests/docker/Dockerfile.server
+    environment:
+      MESHEZIA_TOKEN: test-admin-token
+      DB_PATH: /data/meshezia.db
+      STATIC_DIR: /app/static
+      GRACE_PERIOD_MS: ${GRACE_PERIOD_MS:-}
+      DIRECT_PROBE_INTERVAL_MS: ${DIRECT_PROBE_INTERVAL_MS:-}
+    ports:
+      - "${SERVER_HOST_PORT:-3000}:3000"
+    volumes:
+      - server-data:/data
+    networks:
+      mesh:
+        ipv4_address: ${SERVER_IP:-172.30.0.10}
+
+  node1:
+    image: meshezia-test-agent
+    build:
+      context: ..
+      dockerfile: tests/docker/Dockerfile.agent
+    command: >
+      bun run packages/agent/src/index.ts
+      --userspace
+      --server=http://${SERVER_IP:-172.30.0.10}:3000
+      --token=${NETWORK_TOKEN:-placeholder}
+      --network=${NETWORK_ID:-placeholder}
+      --name=node-1
+      --ipv4=${NODE1_IP:-172.30.0.11}
+      --observe-port=9100
+    environment: {}
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    sysctls:
+      - net.ipv4.ip_forward=1
+    depends_on:
+      - server
+    networks:
+      mesh:
+        ipv4_address: ${NODE1_IP:-172.30.0.11}
+    restart: on-failure
+
+  node2:
+    image: meshezia-test-agent
+    build:
+      context: ..
+      dockerfile: tests/docker/Dockerfile.agent
+    command: >
+      bun run packages/agent/src/index.ts
+      --userspace
+      --server=http://${SERVER_IP:-172.30.0.10}:3000
+      --token=${NETWORK_TOKEN:-placeholder}
+      --network=${NETWORK_ID:-placeholder}
+      --name=node-2
+      --ipv4=${NODE2_IP:-172.30.0.12}
+      --observe-port=9100
+    environment: {}
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    sysctls:
+      - net.ipv4.ip_forward=1
+    depends_on:
+      - server
+    networks:
+      mesh:
+        ipv4_address: ${NODE2_IP:-172.30.0.12}
+    restart: on-failure
+
+  node3:
+    image: meshezia-test-agent
+    build:
+      context: ..
+      dockerfile: tests/docker/Dockerfile.agent
+    command: >
+      bun run packages/agent/src/index.ts
+      --userspace
+      --server=http://${SERVER_IP:-172.30.0.10}:3000
+      --token=${NETWORK_TOKEN:-placeholder}
+      --network=${NETWORK_ID:-placeholder}
+      --name=node-3
+      --ipv4=${NODE3_IP:-172.30.0.13}
+      --observe-port=9100
+    environment: {}
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    sysctls:
+      - net.ipv4.ip_forward=1
+    depends_on:
+      - server
+    networks:
+      mesh:
+        ipv4_address: ${NODE3_IP:-172.30.0.13}
+    restart: on-failure
+
+networks:
+  mesh:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${MESH_SUBNET:-172.30.0.0/24}
+
+volumes:
+  server-data:
