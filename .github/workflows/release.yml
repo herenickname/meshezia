@@ -28,9 +28,6 @@ jobs:
           - os: macos-latest
             target: bun-darwin-arm64
             artifact: meshezia-agent-darwin-arm64
-          - os: macos-latest
-            target: bun-darwin-x64
-            artifact: meshezia-agent-darwin-x86_64
 
     runs-on: ${{ matrix.os }}
     steps:
