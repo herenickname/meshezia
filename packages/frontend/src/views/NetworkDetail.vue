@@ -424,17 +424,18 @@ onUnmounted(() => {
         </div>
 
         <!-- Peer table -->
+        <div class="overflow-x-auto">
         <table v-if="peers.length > 0" class="table-fixed">
             <colgroup>
-                <col style="width: 20%" /><!-- Name -->
+                <col style="width: 18%" /><!-- Name -->
                 <col style="width: 8%" /><!-- Status -->
                 <col style="width: 10%" /><!-- Mesh IP -->
-                <col style="width: 12%" /><!-- Public IP -->
-                <col style="width: 12%" /><!-- Pubkey -->
+                <col style="width: 11%" /><!-- Public IP -->
+                <col style="width: 11%" /><!-- Pubkey -->
                 <col style="width: 9%" /><!-- Last Seen -->
-                <col style="width: 8%" /><!-- TTL -->
+                <col style="width: 7%" /><!-- TTL -->
                 <col style="width: 8%" /><!-- Memo -->
-                <col style="width: 13%" /><!-- Actions -->
+                <col style="width: 18%" /><!-- Actions -->
             </colgroup>
             <thead>
                 <tr>
@@ -443,7 +444,7 @@ onUnmounted(() => {
                     <th :aria-sort="ariaSort('meshIpv4')"><button type="button" class="btn-reset w-full text-left cursor-pointer" @click="toggleSort('meshIpv4')">Mesh IP {{ sortIcon('meshIpv4') }}</button></th>
                     <th>Public IP</th>
                     <th>Pubkey</th>
-                    <th :aria-sort="ariaSort('lastSeen')"><button type="button" class="btn-reset w-full text-left cursor-pointer" @click="toggleSort('lastSeen')">Last Seen {{ sortIcon('lastSeen') }}</button></th>
+                    <th :aria-sort="ariaSort('lastSeen')"><button type="button" class="btn-reset w-full text-left cursor-pointer whitespace-nowrap" @click="toggleSort('lastSeen')">Last Seen {{ sortIcon('lastSeen') }}</button></th>
                     <th>TTL</th>
                     <th>Memo</th>
                     <th aria-label="Actions"></th>
@@ -514,7 +515,7 @@ onUnmounted(() => {
                         <td>
                             <span class="text-xs text-gray-500 max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap inline-block align-middle" :title="p.memo">{{ p.memo || '—' }}</span>
                         </td>
-                        <td @click.stop>
+                        <td class="whitespace-nowrap" @click.stop>
                             <div class="flex gap-1.5">
                                 <button v-if="isOnline(p.lastSeen)" class="btn btn-secondary btn-sm" :aria-label="`Update ${p.name}`" @click="openUpdateDialog(p.id)">Update</button>
                                 <button class="btn btn-danger btn-sm" :aria-label="`Remove ${p.name}`" @click="removePeer(p.id)">Remove</button>
@@ -597,6 +598,7 @@ onUnmounted(() => {
                 </template>
             </tbody>
         </table>
+        </div>
 
 
         <!-- Network ID -->
