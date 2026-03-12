@@ -216,10 +216,13 @@ function getForcedModeFromDb(peerA: string, peerB: string): ForcedMode | null {
 function shouldInitiateRelayProbe(peerA: string, peerB: string, key: string, health: PairHealth): boolean {
     if (activeNegotiations.has(key)) return false
     // Check in-memory cache first, fall back to DB (covers server restart)
-    const forced = health.forcedMode ?? getForcedModeFromDb(peerA, peerB)
+    const cached = health.forcedMode
+    const forced = cached ?? getForcedModeFromDb(peerA, peerB)
     if (forced !== null) {
-        health.forcedMode = forced // sync cache
-        console.log(`[negotiate] pair ${key} — skipped: forced mode (${forced})`)
+        if (cached !== forced) {
+            health.forcedMode = forced // sync cache
+            console.log(`[negotiate] pair ${key} — skipped: forced mode (${forced})`)
+        }
         return false
     }
     // Dead peer guard: both must be WS-connected

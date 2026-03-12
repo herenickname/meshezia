@@ -139,3 +139,4 @@ export type RelayControlMessage =
     | NegotiateMessage
     | { type: 'peer-removed'; peerId: string }
     | { type: 'agent-update'; url: string }
+    | { type: 'ping' }

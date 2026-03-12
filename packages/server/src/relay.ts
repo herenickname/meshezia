@@ -112,3 +112,25 @@ export function sendTextToPeer(peerId: string, message: string): boolean {
     }
     return false
 }
+
+// ─── Application-level heartbeat ───
+// Bun's sendPings uses protocol-level PING frames which don't trigger
+// the agent's onmessage handler. Without application traffic the agent's
+// stale-connection timer (WS_STALE_MS) fires and closes the socket,
+// causing the observed 30s flapping cycle.  This heartbeat sends a
+// lightweight JSON message that the agent's onmessage *does* see.
+
+const HEARTBEAT_MSG = JSON.stringify({ type: 'ping' })
+let heartbeatTimer: ReturnType<typeof setInterval> | null = null
+
+export function startHeartbeat(intervalMs = 20_000) {
+    heartbeatTimer = setInterval(() => {
+        for (const peerId of connections.keys()) {
+            sendTextToPeer(peerId, HEARTBEAT_MSG)
+        }
+    }, intervalMs)
+}
+
+export function stopHeartbeat() {
+    if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null }
+}

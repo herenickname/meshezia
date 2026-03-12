@@ -149,7 +149,9 @@ export function connectWs(opts: ConnectWsOpts) {
             if (typeof event.data === 'string') {
                 try {
                     const msg = JSON.parse(event.data)
-                    if (msg.type === 'peer-removed') {
+                    if (msg.type === 'ping') {
+                        return // server heartbeat — lastWsDataAt already updated above
+                    } else if (msg.type === 'peer-removed') {
                         console.log(`[relay-ws] peer removed: ${msg.peerId}`)
                         onPeerRemovedCb?.(msg.peerId)
                     } else if (msg.type === 'agent-update') {

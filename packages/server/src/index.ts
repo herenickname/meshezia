@@ -1,7 +1,7 @@
 import { resolve, join } from 'path'
 import { initDb, getDb } from './db'
 import { createApi } from './api'
-import { wsHandler, type WsData, sendTextToPeer, isPeerConnected, setOnNegotiateMessage, setOnDisconnect } from './relay'
+import { wsHandler, type WsData, sendTextToPeer, isPeerConnected, setOnNegotiateMessage, setOnDisconnect, startHeartbeat, stopHeartbeat } from './relay'
 import { startReaper, stopReaper } from './reaper'
 import { initNegotiator, handleNegotiateMessage, abortPeerNegotiations, startStaleSweep } from './negotiate'
 
@@ -153,12 +153,14 @@ setOnDisconnect((peerId) => {
 startStaleSweep()
 
 startReaper()
+startHeartbeat()
 
 // ─── Graceful shutdown ───
 
 function shutdown() {
     console.log('[meshezia-server] shutting down...')
     clearInterval(rateLimitCleanupTimer)
+    stopHeartbeat()
     stopReaper()
     stopStaleSweep()
     server.stop()
