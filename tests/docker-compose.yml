@@ -10,6 +10,8 @@ services:
       STATIC_DIR: /app/static
       GRACE_PERIOD_MS: ${GRACE_PERIOD_MS:-}
       DIRECT_PROBE_INTERVAL_MS: ${DIRECT_PROBE_INTERVAL_MS:-}
+      RATE_WINDOW_MS: ${RATE_WINDOW_MS:-}
+      RATE_MAX_REQUESTS: ${RATE_MAX_REQUESTS:-}
     ports:
       - "${SERVER_HOST_PORT:-3000}:3000"
     volumes:

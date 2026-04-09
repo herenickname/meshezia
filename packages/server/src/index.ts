@@ -48,8 +48,8 @@ function withSecurityHeaders(res: Response): Response {
 
 // ─── Rate limiting (per-IP, fixed window) ───
 
-const RATE_WINDOW_MS = 60_000
-const RATE_MAX_REQUESTS = 120
+const RATE_WINDOW_MS = Number(process.env.RATE_WINDOW_MS) || 60_000
+const RATE_MAX_REQUESTS = Number(process.env.RATE_MAX_REQUESTS) || 120
 
 const rateMap = new Map<string, { count: number; resetAt: number }>()
 
